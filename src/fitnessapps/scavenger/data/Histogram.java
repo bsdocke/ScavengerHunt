@@ -19,6 +19,37 @@ public class Histogram {
 	public Histogram(Bitmap bmp) {
 		generateHistogram(bmp);
 	}
+    public int getRedPixels(){
+	return redPixels;
+    }
+
+    public int getGreenPixels(){
+	return greenPixels;
+    }
+
+    public int getBluePixels(){
+	return bluePixels;
+    }
+
+    public int getPurplePixels(){
+	return purplePixels;
+    }
+
+    public int getOrangePixels(){
+	return orangePixels;
+    }
+
+    public int getGreyPixels(){
+	return greyPixels;
+    }
+
+    public int getBrownPixels(){
+	return brownPixels;
+    }
+
+    public int getPinkPixels(){
+	return pinkPixels;
+    }
 
 	private void generateHistogram(Bitmap bmp) {
 		int width = bitmap.getWidth();
