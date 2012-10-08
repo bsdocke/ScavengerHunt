@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <TextView
+         android:id="@+id/gameTitle"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_marginTop="50dip"
+         android:layout_centerHorizontal="true"
+         android:text="@string/gameTitle"
+         android:textColor="#FFFFFF"
+         android:textSize="40dip" />
+
+     <Button
+         android:id="@+id/startBtn"
+         android:layout_width="130dip"
+         android:layout_height="wrap_content"
+         android:layout_below="@+id/gameTitle"
+         android:layout_centerHorizontal="true"
+         android:layout_marginTop="50dp"
+         android:onClick="goToLevelOne"
+         android:text="@string/start" 
+         android:textSize="25dip" />
+    
+
+</RelativeLayout>

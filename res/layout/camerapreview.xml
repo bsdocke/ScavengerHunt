@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" 
+    android:layout_height="fill_parent">
+    <SurfaceView
+        android:id="@+id/preview"
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent"
+        android:layout_centerInParent="true">
+    </SurfaceView>
+    
+    <TextView
+        android:id="@+id/timerView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="View Timer Here"
+        android:textSize="20dip" 
+        android:textColor="#FFF"
+        android:textColorHighlight="#000"/>
+    
+    <Button 
+        android:id="@+id/buttonCustomDialog"
+        android:layout_width="200dip"
+        android:layout_height="200dip"
+		android:layout_gravity="bottom" 
+        android:text="OK"/>
+    
+</FrameLayout>
