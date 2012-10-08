@@ -2,28 +2,25 @@ package fitnessapps.scavenger.components;
 
 import java.util.Random;
 
-import fitnessapps.scavenger.activity.R;
-import fitnessapps.scavenger.data.GlobalState;
-import fitnessapps.scavenger.data.Histogram;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import fitnessapps.scavenger.activity.R;
+import fitnessapps.scavenger.data.GlobalState;
+import fitnessapps.scavenger.data.Histogram;
 
 public abstract class Level extends Activity {
 
@@ -83,7 +80,8 @@ public abstract class Level extends Activity {
 	public void onResume() {
 		super.onResume();
 		mCamera = Camera.open();
-		mCamera.startPreview();
+        
+        mCamera.startPreview();
 	} 
 
 	@Override
