@@ -17,7 +17,8 @@ public class Histogram {
 	private int pinkPixels;
 
 	public Histogram(Bitmap bmp) {
-		generateHistogram(bmp);
+		bitmap = bmp;
+		generateHistogram(bitmap);
 	}
     public int getRedPixels(){
 	return redPixels;
@@ -56,8 +57,8 @@ public class Histogram {
 		int height = bitmap.getHeight();
 		size = width*height;
 
-		for (int i = 0; i < height; i++) {
-			for (int j = 0; j < width; j++) {
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
 				int pixColor = bmp.getPixel(i, j);
 
 				if (isRedZero(pixColor)) {

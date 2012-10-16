@@ -6,16 +6,18 @@ import android.widget.TextView;
 public class MyTimer extends CountDownTimer {
 
 	TextView textView;
+	Level level;
 	boolean boolFinished;
 	long secondsRemaining; 
 	long secondsStartedWith;
 	
-	public MyTimer(long millisInFuture, long countDownInterval, TextView txtView) {
+	public MyTimer(long millisInFuture, long countDownInterval, TextView txtView, Level level) {
 		super(millisInFuture, countDownInterval);
 		this.textView = txtView;
 		boolFinished = false;
 		secondsRemaining = -1;
 		secondsStartedWith = millisInFuture/1000;
+		this.level = level;
 	}
 	
 	public boolean isFinished() {
@@ -34,6 +36,7 @@ public class MyTimer extends CountDownTimer {
 	public void onFinish() {
 		textView.setText("Times Up!");
 		boolFinished = true;
+		level.levelFailed();
 	}
 	@Override
 	public void onTick(long millisUntilFinished) {

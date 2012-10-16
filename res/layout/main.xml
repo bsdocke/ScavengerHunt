@@ -2,7 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical" 
+    android:background="@drawable/scavhunt2" >
 
     <TextView
          android:id="@+id/gameTitle"
@@ -11,7 +12,7 @@
          android:layout_marginTop="50dip"
          android:layout_centerHorizontal="true"
          android:text="@string/gameTitle"
-         android:textColor="#FFFFFF"
+         android:textColor="#0198E1"
          android:textSize="40dip" />
 
      <Button
