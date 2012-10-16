@@ -4,6 +4,7 @@ package fitnessapps.scavenger.activity;
 
 
 import android.os.Bundle;
+import android.view.WindowManager.LayoutParams;
 
 import fitnessapps.scavenger.components.Level;
 import fitnessapps.scavenger.data.GlobalState;
@@ -19,7 +20,7 @@ public class LevelActivity extends Level {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         initLevelFeatures(GlobalState.level_number);
-        
+        getWindow().addFlags(LayoutParams.FLAG_KEEP_SCREEN_ON);
         initGameTimer(levelDurationMili);
         setTasksToComplete(tasksToComplete);
     }
@@ -27,7 +28,7 @@ public class LevelActivity extends Level {
     public void initLevelFeatures(int level) {
     	switch(level) {
     	case 1:
-    		levelDurationMili = 30000;
+    		levelDurationMili = 90000;
     		tasksToComplete = 2;
     		break;
     	case 2:

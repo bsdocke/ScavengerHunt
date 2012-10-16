@@ -1,12 +1,7 @@
 package fitnessapps.scavenger.components;
 
+import java.util.List;
 import java.util.Random;
-
-import fitnessapps.scavenger.activity.LevelActivity;
-import fitnessapps.scavenger.activity.R;
-import fitnessapps.scavenger.activity.StartGameActivity;
-import fitnessapps.scavenger.data.GlobalState;
-import fitnessapps.scavenger.data.Histogram;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -17,24 +12,25 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.Vibrator;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
+import fitnessapps.scavenger.activity.LevelActivity;
+import fitnessapps.scavenger.activity.R;
+import fitnessapps.scavenger.activity.StartGameActivity;
+import fitnessapps.scavenger.data.GlobalState;
+import fitnessapps.scavenger.data.Histogram;
 
 public abstract class Level extends Activity {
 
@@ -65,8 +61,7 @@ public abstract class Level extends Activity {
 	private static final int PURPLE = 4;
 	private static final int PINK = 5;
 	private static final int ORANGE = 6;
-	private static final int GREY = 7;
-	private static final int BROWN = 8;
+
 	private int randColorNum = -1;
 	private PowerManager pm;
 	private PowerManager.WakeLock wakelock;
@@ -103,6 +98,11 @@ public abstract class Level extends Activity {
 	public void onResume() {
 		super.onResume();
 		mCamera = Camera.open();
+		Parameters params = mCamera.getParameters();
+		List<Camera.Size> sizes = params.getSupportedPictureSizes();
+		
+		params.setPictureSize(sizes.get(0).width, sizes.get(0).height);
+		mCamera.setParameters(params);
 		mCamera.startPreview();
 	}
 
@@ -122,16 +122,18 @@ public abstract class Level extends Activity {
 	
 	private PictureCallback myPictureCallback_JPG = new PictureCallback(){
 
-		 public void onPictureTaken(byte[] arg0, Camera arg1) {
+		 @Override
+		public void onPictureTaken(byte[] arg0, Camera arg1) {
 		  
 		  bitmapPicture = getBitmap(arg0);
 		 
 		  if (validatePicture(bitmapPicture)) {
 				taskCompleted();
+				mCamera.startPreview();
 				checkTaskProgress();
 			}
 			else {
-				tryAgain();
+				levelFailed();
 			} 
 		  bitmapPicture.recycle();
 		  bitmapPicture = null;
@@ -198,6 +200,7 @@ public abstract class Level extends Activity {
 	}
 
 	SurfaceHolder.Callback surfaceCallback = new SurfaceHolder.Callback() {
+		@Override
 		public void surfaceCreated(SurfaceHolder holder) {
 			// The Surface has been created, acquire the camera and tell it
 			// where
@@ -212,6 +215,7 @@ public abstract class Level extends Activity {
 			// }
 		}
 
+		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
 			// Surface will be destroyed when we return, so stop the preview.
 			// Because the CameraDevice object is not a shared resource, it's
@@ -222,6 +226,7 @@ public abstract class Level extends Activity {
 			// mCamera = null;
 		}
 
+		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int w,
 				int h) {
 			// Now that the size is known, set up the camera parameters and
@@ -239,7 +244,14 @@ public abstract class Level extends Activity {
 	public boolean validatePicture(Bitmap bitMap) {
 		boolean goodPic = false;
 		histogram = new Histogram(bitMap);
-		if( ((getColorPixels(histogram)) / (bitMap.getWidth() * bitMap.getHeight()* 100)) > 20) {
+		int width = bitMap.getWidth();
+		int height = bitMap.getHeight();
+		int grey = histogram.getGreyPixels();
+		int brown = histogram.getBrownPixels();
+		int imageSize = width*height;
+		int colorPixels = getColorPixels(histogram);
+		int adjustedSize = imageSize - brown -grey;
+		if( (colorPixels*100) / (adjustedSize/4) > 20) {
 			goodPic = true;
 		}
 		return goodPic;
@@ -263,14 +275,8 @@ public abstract class Level extends Activity {
 		case PINK:
 			colorPix = mHist.getPinkPixels();
 			break;
-		case GREY:
-			colorPix = mHist.getGreyPixels();
-			break;
 		case PURPLE:
 			colorPix = mHist.getPurplePixels();
-			break;
-		case BROWN:
-			colorPix = mHist.getBrownPixels();
 			break;
 		}
 		return colorPix;
@@ -311,6 +317,7 @@ public abstract class Level extends Activity {
 		Button button = (Button) dialog.findViewById(R.id.button);
 		button.setOnClickListener(new OnClickListener() {
 
+			@Override
 			public void onClick(View v) {
 				if (taskNumber == 1) {
 					countdownTimer.start();
@@ -355,14 +362,6 @@ public abstract class Level extends Activity {
 			newColor = "Pink";
 			colorImgDrawable = R.drawable.pink;
 			break;
-		case GREY:
-			newColor = "Grey";
-			colorImgDrawable = R.drawable.grey;
-			break;
-		case BROWN:
-			newColor = "Brown";
-			colorImgDrawable = R.drawable.brown;
-			break;
 		case ORANGE:
 			newColor = "Orange";
 			colorImgDrawable = R.drawable.orange;
@@ -373,7 +372,7 @@ public abstract class Level extends Activity {
 
 	public int randomizeColorSelection() {
 		Random gen = new Random();
-		int pickedNumber = gen.nextInt(8) + 1;
+		int pickedNumber = gen.nextInt(6) + 1;
 		return pickedNumber;
 	}
 
@@ -456,6 +455,7 @@ public abstract class Level extends Activity {
 			alertBox.setMessage("You ran out of time! Try again!");
 		}
 		alertBox.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			@Override
 			public void onClick(DialogInterface dialogInterface, int arg1) {
 				if (lastLevel) {
 					startActivity(startIntent);

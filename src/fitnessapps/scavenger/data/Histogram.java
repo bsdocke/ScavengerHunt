@@ -57,16 +57,16 @@ public class Histogram {
 		int height = bitmap.getHeight();
 		size = width*height;
 
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
+		for (int i = 0; i < width; i+=2) {
+			for (int j = 0; j < height; j+=2) {
 				int pixColor = bmp.getPixel(i, j);
 
 				if (isRedZero(pixColor)) {
 					if (isGreenZero(pixColor)) {
 						if (isBlueZero(pixColor)) {
-							// omitting black
+							greyPixels++;
 						} else if (isBlueOne(pixColor)) {
-							// omitting black
+							greyPixels++;
 						} else if (isBlueTwo(pixColor)) {
 							bluePixels++;
 						} else if (isBlueThree(pixColor)) {
@@ -74,9 +74,9 @@ public class Histogram {
 						}
 					} else if (isGreenOne(pixColor)) {
 						if (isBlueZero(pixColor)) {
-							// black
+							greyPixels++;
 						} else if (isBlueOne(pixColor)) {
-							// black
+							greyPixels++;
 						} else if (isBlueTwo(pixColor)) {
 							bluePixels++;
 						} else if (isBlueThree(pixColor)) {
@@ -108,7 +108,7 @@ public class Histogram {
 				if (isRedOne(pixColor)) {
 					if (isGreenZero(pixColor)) {
 						if (isBlueZero(pixColor)) {
-							// black
+							greyPixels++;
 						} else if (isBlueOne(pixColor)) {
 							purplePixels++;
 						} else if (isBlueTwo(pixColor)) {
