@@ -1,17 +1,18 @@
 package fitnessapps.scavenger.components;
 
+import fitnessapps.scavenger.activity.LevelActivity;
 import android.os.CountDownTimer;
 import android.widget.TextView;
 
 public class MyTimer extends CountDownTimer {
 
 	TextView textView;
-	Level level;
+	LevelActivity level;
 	boolean boolFinished;
 	long secondsRemaining; 
 	long secondsStartedWith;
 	
-	public MyTimer(long millisInFuture, long countDownInterval, TextView txtView, Level level) {
+	public MyTimer(long millisInFuture, long countDownInterval, TextView txtView, LevelActivity level) {
 		super(millisInFuture, countDownInterval);
 		this.textView = txtView;
 		boolFinished = false;

@@ -14,16 +14,17 @@
 
     <ImageView
         android:id="@+id/imageview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/text" />
-    
-    <Button 
+        android:layout_width="100dip"
+        android:layout_height="100dip"
+        android:layout_centerInParent="true" 
+        android:layout_marginTop="20dip"/>
+
+    <Button
         android:id="@+id/button"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/text"
-        android:layout_centerHorizontal="true" 
-        android:text="OK"/>
+        android:layout_height="fill_parent"
+        android:layout_below="@+id/imageview"
+        android:layout_centerHorizontal="true"
+        android:text="OK" />
 
 </RelativeLayout>

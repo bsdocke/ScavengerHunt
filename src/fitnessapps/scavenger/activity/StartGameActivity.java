@@ -16,7 +16,8 @@ public class StartGameActivity extends Activity {
         setContentView(R.layout.main);
         
         GlobalState.level_number = 1;
-		GlobalState.score = 0;
+        GlobalState.levelDurationMili = 110000;
+        GlobalState.tasksToComplete = 3;
     }
     
     public void goToLevelOne(View view) {
