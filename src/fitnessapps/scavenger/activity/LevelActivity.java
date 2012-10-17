@@ -65,6 +65,7 @@ public class LevelActivity extends Activity {
 	private Bitmap bitmapPicture;
 	private SoundPool pool;
 	private int crowdCheer;
+	private Button snapButton;
 
 	private static final long COUNTDOWN_INTERVAL = 1000;
 	private static final int RED = 1;
@@ -95,7 +96,7 @@ public class LevelActivity extends Activity {
 		timerView = (TextView) findViewById(R.id.timerView);
 		levelTaskView = (TextView) findViewById(R.id.currentLevelTaskText);
 		imageView = (ImageView) findViewById(R.id.currentColorImage);
-
+		snapButton = (Button) findViewById(R.id.buttonSnap);
 		// must be called after timerView is instantiated
 		initGameTimer(GlobalState.levelDurationMili);
 
@@ -149,6 +150,7 @@ public class LevelActivity extends Activity {
 				taskFailed();
 				mCamera.startPreview();
 			}
+			
 			bitmapPicture.recycle();
 			bitmapPicture = null;
 		}
@@ -314,6 +316,7 @@ public class LevelActivity extends Activity {
 					levelTaskView.setText("Level: " + getLevelNumber()
 							+ " Task: " + taskNumber);
 				}
+				snapButton.setClickable(true);
 				dialog.dismiss();
 			}
 		});
@@ -418,8 +421,10 @@ public class LevelActivity extends Activity {
 	}
 
 	public void onTakePicture(View view) {
-
+		
+		snapButton.setClickable(false);
 		mCamera.takePicture(null, null, myPictureCallback_JPG);
+		
 	}
 
 	private void vibrate() {

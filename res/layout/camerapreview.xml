@@ -21,7 +21,7 @@
         android:textColorHighlight="#000"/>
     
     <Button 
-        android:id="@+id/buttonCustomDialog"
+        android:id="@+id/buttonSnap"
         android:layout_width="100dip"
         android:layout_height="50dip"
         android:text="Snap Pic"
