@@ -1,8 +1,5 @@
 package fitnessapps.scavenger.activity;
 
-import fitnessapps.scavenger.data.GlobalState;
-import fitnessapps.scavenger.activity.R;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,13 +11,9 @@ public class StartGameActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
-        GlobalState.level_number = 1;
-        GlobalState.levelDurationMili = 110000;
-        GlobalState.tasksToComplete = 3;
     }
     
-    public void goToLevelOne(View view) {
+    public void startGame(View view) {
     	Intent levelOne = new Intent(this, LevelActivity.class);
     	startActivity(levelOne);
     }

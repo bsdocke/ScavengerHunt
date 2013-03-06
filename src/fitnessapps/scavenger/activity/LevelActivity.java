@@ -1,13 +1,8 @@
 package fitnessapps.scavenger.activity;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Random;
-
-import fitnessapps.scavenger.activity.LevelActivity;
-import fitnessapps.scavenger.activity.R;
-import fitnessapps.scavenger.components.MyTimer;
-import fitnessapps.scavenger.data.GlobalState;
-import fitnessapps.scavenger.data.Histogram;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -23,23 +18,21 @@ import android.hardware.Camera.PictureCallback;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.os.Vibrator;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
+import fitnessapps.scavenger.components.MyTimer;
+import fitnessapps.scavenger.data.ColorEnum;
+import fitnessapps.scavenger.data.GlobalState;
+import fitnessapps.scavenger.data.Histogram;
 
 public class LevelActivity extends Activity {
 
@@ -68,19 +61,13 @@ public class LevelActivity extends Activity {
 	private Button snapButton;
 
 	private static final long COUNTDOWN_INTERVAL = 1000;
-	private static final int RED = 1;
-	private static final int BLUE = 2;
-	private static final int GREEN = 3;
-	private static final int PURPLE = 4;
-	private static final int PINK = 5;
-	private static final int ORANGE = 6;
-	private int randColorNum = -1;
+	private ColorEnum randColor;
 
 	private void initIntents() {
 		startIntent = new Intent(this, StartGameActivity.class);
 		currIntent = new Intent(this, LevelActivity.class);
 	}
-	
+
 	private void initSounds() {
 		pool = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
 		crowdCheer = pool.load(this, R.raw.crowd_cheer, 1);
@@ -142,15 +129,32 @@ public class LevelActivity extends Activity {
 
 			bitmapPicture = getBitmap(arg0);
 
-			if (validatePicture(bitmapPicture)) {
-				taskCompleted();
-				mCamera.startPreview();
-				checkTaskProgress();
-			} else {
-				taskFailed();
-				mCamera.startPreview();
+			try {
+				if (isPictureValid(bitmapPicture)) {
+					taskCompleted();
+					mCamera.startPreview();
+					checkTaskProgress();
+				} else {
+					taskFailed();
+					mCamera.startPreview();
+				}
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			
+
 			bitmapPicture.recycle();
 			bitmapPicture = null;
 		}
@@ -164,9 +168,11 @@ public class LevelActivity extends Activity {
 
 	private void taskFailed() {
 		vibrate();
-		Toast.makeText(this,
-				"Sorry that wasn't " + currentColor + " enough! Try another color!",
-				Toast.LENGTH_LONG).show();
+		Toast.makeText(
+				this,
+				"Sorry that wasn't " + currentColor
+						+ " enough! Try another color!", Toast.LENGTH_LONG)
+				.show();
 		alertTask();
 	}
 
@@ -238,25 +244,31 @@ public class LevelActivity extends Activity {
 		}
 	};
 
-	public boolean validatePicture(Bitmap bitMap) {
-		boolean goodPic = false;
+	public boolean isPictureValid(Bitmap bitMap)
+			throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		int imageSize = getPixelCountWithoutBrownAndGrey(bitMap);
+		int colorPixels = getAmountOfColorInHistogram(histogram);
+
+		return isEnoughColorPixels(colorPixels, imageSize);
+	}
+
+	private int getImageSize(Bitmap bitMap) {
+		return bitMap.getWidth() * bitMap.getHeight();
+	}
+
+	private int getPixelCountWithoutBrownAndGrey(Bitmap bitMap) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		histogram = new Histogram(bitMap);
-		int width = bitMap.getWidth();
-		int height = bitMap.getHeight();
-		int grey = histogram.getGreyPixels();
-		int brown = histogram.getBrownPixels();
-		int imageSize = width * height;
-		int colorPixels = getColorPixels(histogram);
-		int adjustedSize = imageSize - brown - grey;
-		if ((colorPixels * 100) / (adjustedSize / 4) > 20) {
-			goodPic = true;
-		}
-		return goodPic;
+		return getImageSize(bitMap) - histogram.getGreyPixels()
+				- histogram.getBrownPixels();
+	}
+
+	private boolean isEnoughColorPixels(int colorPixels, int adjustedSize) {
+		return (colorPixels * 100) / (adjustedSize / 4) > 20;
 	}
 
 	public int getColorPixels(Histogram mHist) {
 		int colorPix = -1;
-		switch (randColorNum) {
+		switch (randColor) {
 		case RED:
 			colorPix = mHist.getRedPixels();
 			break;
@@ -277,6 +289,16 @@ public class LevelActivity extends Activity {
 			break;
 		}
 		return colorPix;
+	}
+
+	private int getAmountOfColorInHistogram(Histogram mHist)
+			throws IllegalArgumentException, IllegalAccessException,
+			InvocationTargetException, SecurityException, NoSuchMethodException {
+		java.lang.reflect.Method method;
+		method = mHist.getClass().getMethod(
+				"get" + randColor.getStringVersion() + "Pixels");
+		return (Integer) method.invoke(mHist);
+
 	}
 
 	/************* END CAMERA METHODS *********************************/
@@ -324,35 +346,11 @@ public class LevelActivity extends Activity {
 	}
 
 	public String getNewColor() {
-		String newColor = "";
-		int nColor = randomizeColorSelection();
-		randColorNum = nColor;
-		switch (nColor) {
-		case RED:
-			newColor = "Red";
-			colorImgDrawable = R.drawable.red;
-			break;
-		case BLUE:
-			newColor = "Blue";
-			colorImgDrawable = R.drawable.blue;
-			break;
-		case GREEN:
-			newColor = "Green";
-			colorImgDrawable = R.drawable.green;
-			break;
-		case PURPLE:
-			newColor = "Purple";
-			colorImgDrawable = R.drawable.purple;
-			break;
-		case PINK:
-			newColor = "Pink";
-			colorImgDrawable = R.drawable.pink;
-			break;
-		case ORANGE:
-			newColor = "Orange";
-			colorImgDrawable = R.drawable.orange;
-			break;
-		}
+		String newColor;
+		randColor = ColorEnum.randomColor();
+		newColor = randColor.getStringVersion();
+		colorImgDrawable = randColor.getResource();
+
 		return newColor;
 	}
 
@@ -421,15 +419,23 @@ public class LevelActivity extends Activity {
 	}
 
 	public void onTakePicture(View view) {
-		
 		snapButton.setClickable(false);
 		mCamera.takePicture(null, null, myPictureCallback_JPG);
-		
 	}
 
 	private void vibrate() {
 		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		v.vibrate(200);
+	}
+
+	private void incrementLevel() {
+		GlobalState.level_number++;
+	}
+
+	private void incrementGameDifficulty() {
+		incrementLevel();
+		incrementLevelDuration();
+		incrementTasksToComplete();
 	}
 
 	public void showEndOfLevelAlert(boolean completed) {
@@ -438,9 +444,7 @@ public class LevelActivity extends Activity {
 		if (completed && currLevel < 10) {
 			alertBox.setMessage("Great job on completing level " + currLevel
 					+ "! Let's keep hunting!");
-			GlobalState.level_number += 1;
-			incrementLevelDuration();
-			incrementTasksToComplete();
+			incrementGameDifficulty();
 		} else if (completed && currLevel == 10) {
 			alertBox.setMessage("Congratulations! You completed the scavenger hunt!");
 			lastLevel = true;
@@ -461,9 +465,13 @@ public class LevelActivity extends Activity {
 		alertBox.show();
 	}
 
+	private boolean isGameTimeRemaining() {
+		return countdownTimer.getSecondsRemaining() >= 0;
+	}
+
 	@Override
 	public void onBackPressed() {
-		if (countdownTimer.getSecondsRemaining() >= 0) {
+		if (isGameTimeRemaining()) {
 			this.onStop();
 			startActivity(currIntent);
 		} else {
@@ -482,7 +490,6 @@ public class LevelActivity extends Activity {
 	@Override
 	public void onStop() {
 		stopTimer();
-
 		super.onStop();
 	}
 
