@@ -258,11 +258,8 @@ public class LevelActivity extends Activity {
 
 	private int getPixelCountWithoutBrownAndGrey(Bitmap bitMap) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		histogram = new Histogram(bitMap);
-		return getImageSize(bitMap) - getBrownAndGreyPixels();
-	}
-	
-	private int getBrownAndGreyPixels(){
-		return histogram.getGreyPixels() + histogram.getBrownPixels();
+		return getImageSize(bitMap) - histogram.getGreyPixels()
+				- histogram.getBrownPixels();
 	}
 
 	private boolean isEnoughColorPixels(int colorPixels, int adjustedSize) {

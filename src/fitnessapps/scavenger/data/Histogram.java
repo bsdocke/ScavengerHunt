@@ -4,7 +4,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.util.Log;
 
 public class Histogram {
 
@@ -71,27 +70,13 @@ public class Histogram {
 		}
 	}
 
-	private void queryColorMap(int rawPixelColor){
+	private void queryColorMap(int rawPixelColor)
+			throws IllegalArgumentException, SecurityException,
+			IllegalAccessException, InvocationTargetException,
+			NoSuchMethodException {
 		String colorResult = ColorMap.getInstance().getColorFromInt(
 				rawPixelColor);
-		try {
-			callIncrementMethod(colorResult);
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-			Log.e("Illegal Argument Exception while calling color increment method: ", colorResult);
-		} catch (SecurityException e) {
-			e.printStackTrace();
-			Log.e("Security Exception", "Security Exception invoking color increment method " + colorResult);
-		} catch (IllegalAccessException e) {
-			Log.e("Illegal Access Exception:", "Illegal access exception invoking color increment method " + colorResult);
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		callIncrementMethod(colorResult);
 	}
 
 	private void callIncrementMethod(String methodColor)
