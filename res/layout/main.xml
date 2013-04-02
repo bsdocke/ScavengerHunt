@@ -2,8 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical" 
-    android:background="@drawable/scavhunt2" >
+    android:orientation="vertical" >
 
     <TextView
          android:id="@+id/gameTitle"
@@ -16,14 +15,36 @@
          android:textSize="40dip" />
 
      <Button
-         android:id="@+id/startBtn"
+         android:id="@+id/easyBtn"
          android:layout_width="130dip"
          android:layout_height="wrap_content"
          android:layout_below="@+id/gameTitle"
          android:layout_centerHorizontal="true"
          android:layout_marginTop="50dp"
-         android:onClick="startGame"
-         android:text="@string/start" 
+         android:onClick="setEasy"
+         android:text="@string/easy" 
+         android:textSize="25dip" />
+     
+     <Button
+         android:id="@+id/medBtn"
+         android:layout_width="130dip"
+         android:layout_height="wrap_content"
+         android:layout_below="@+id/easyBtn"
+         android:layout_centerHorizontal="true"
+         android:layout_marginTop="10dp"
+         android:onClick="setMedium"
+         android:text="@string/medium" 
+         android:textSize="25dip" />
+     
+     <Button
+         android:id="@+id/hardBtn"
+         android:layout_width="130dip"
+         android:layout_height="wrap_content"
+         android:layout_below="@+id/medBtn"
+         android:layout_centerHorizontal="true"
+         android:layout_marginTop="10dp"
+         android:onClick="setHard"
+         android:text="@string/hard" 
          android:textSize="25dip" />
     
 

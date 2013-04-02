@@ -2,12 +2,17 @@ package fitnessapps.scavenger.activity;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Random;
+
+import fitnessapps.scavenger.activity.LevelActivity;
+import fitnessapps.scavenger.activity.R;
+import fitnessapps.scavenger.components.MyTimer;
+import fitnessapps.scavenger.data.ColorEnum;
+import fitnessapps.scavenger.data.GlobalState;
+import fitnessapps.scavenger.data.Histogram;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -18,7 +23,6 @@ import android.hardware.Camera.PictureCallback;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -28,49 +32,55 @@ import android.view.WindowManager.LayoutParams;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
-import fitnessapps.scavenger.components.MyTimer;
-import fitnessapps.scavenger.data.ColorEnum;
-import fitnessapps.scavenger.data.GlobalState;
-import fitnessapps.scavenger.data.Histogram;
 
 public class LevelActivity extends Activity {
 
-	private AlertDialog.Builder builder = null;
-	private AlertDialog alertDialog = null;
-	private MyTimer countdownTimer = null;
+	// Views
 	private TextView timerView = null;
 	private ImageView imageView = null;
 	private TextView levelTaskView = null;
-	private Histogram histogram = null;
+	private Button snapButton;
+	// Camera
 	private SurfaceView preview = null;
 	private SurfaceHolder previewHolder = null;
 	private Camera mCamera = null;
 	private boolean inPreview = false;
 	private boolean cameraConfigured = false;
-	private int taskNumber = 1;
-	private boolean isFirstTask = true;
+	private Bitmap bitmapPicture;
+	private static final int REQ_WIDTH = 512;
+	private static final int REQ_HEIGHT = 384;
+	// Colors
+	private Histogram histogram = null;
 	private int colorImgDrawable;
-	private String currentColor = null;
-	private boolean lastLevel = false;
+	private ColorEnum currentColor = null;
+	private static final String BROWN = "Brown";
+	private static final String GREY = "Grey";
+	// Intents
 	private Intent startIntent;
 	private Intent currIntent;
-	private Bitmap bitmapPicture;
+	private Intent finalIntent;
+	// Sounds
 	private SoundPool pool;
 	private int crowdCheer;
-	private Button snapButton;
-
+	// Timer
+	private MyTimer countdownTimer = null;
 	private static final long COUNTDOWN_INTERVAL = 1000;
-	private ColorEnum randColor;
-
+	
+	/********************INITIALIZE METHODS*****************************/
 	private void initIntents() {
 		startIntent = new Intent(this, StartGameActivity.class);
 		currIntent = new Intent(this, LevelActivity.class);
+		finalIntent = new Intent(this, FinalScoreActivity.class);
 	}
 
 	private void initSounds() {
 		pool = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
 		crowdCheer = pool.load(this, R.raw.crowd_cheer, 1);
+	}
+	
+	public void initGameTimer(long numberOfMiliSec) {
+		countdownTimer = new MyTimer(numberOfMiliSec, COUNTDOWN_INTERVAL,
+				timerView, this);
 	}
 
 	/**************** CAMERA METHODS ***********************************/
@@ -85,7 +95,7 @@ public class LevelActivity extends Activity {
 		imageView = (ImageView) findViewById(R.id.currentColorImage);
 		snapButton = (Button) findViewById(R.id.buttonSnap);
 		// must be called after timerView is instantiated
-		initGameTimer(GlobalState.levelDurationMili);
+		initGameTimer(GlobalState.taskDurationMili);
 
 		initIntents();
 
@@ -126,18 +136,13 @@ public class LevelActivity extends Activity {
 	private PictureCallback myPictureCallback_JPG = new PictureCallback() {
 
 		public void onPictureTaken(byte[] arg0, Camera arg1) {
-
-			bitmapPicture = getBitmap(arg0);
-
+			int score = 0;
+			bitmapPicture = getBitmap(arg0, REQ_WIDTH, REQ_HEIGHT);
+			
 			try {
-				if (isPictureValid(bitmapPicture)) {
-					taskCompleted();
-					mCamera.startPreview();
-					checkTaskProgress();
-				} else {
-					taskFailed();
-					mCamera.startPreview();
-				}
+				score = isPictureValid(bitmapPicture);
+				currentColor.setColorScore(score);
+				mCamera.startPreview();
 			} catch (IllegalArgumentException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -156,16 +161,48 @@ public class LevelActivity extends Activity {
 			}
 
 			bitmapPicture.recycle();
-			bitmapPicture = null;
+			histogram = null;
+			taskCompleted();
 		}
 	};
 
-	private static Bitmap getBitmap(final byte[] array) {
-		final Bitmap bitM = BitmapFactory.decodeByteArray(array, 0,
-				array.length);
-		return bitM;
-	}
+	private static Bitmap getBitmap(final byte[] array, int reqWidth, int reqHeight) {
+		
+		// First decode with inJustDecodeBounds=true to check dimensions
+	    final BitmapFactory.Options options = new BitmapFactory.Options();
+	    options.inJustDecodeBounds = true;
+	    BitmapFactory.decodeByteArray(array, 0, array.length, options);
 
+	    // Calculate inSampleSize
+	    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+	    // Decode bitmap with inSampleSize set
+	    options.inJustDecodeBounds = false;
+	    return BitmapFactory.decodeByteArray(array, 0, array.length, options);
+	}
+	
+	public static int calculateInSampleSize(
+			BitmapFactory.Options options, int reqWidth, int reqHeight) {
+		// Raw height and width of image
+		final int height = options.outHeight;
+		final int width = options.outWidth;
+		int inSampleSize = 1;
+
+		if (height > reqHeight || width > reqWidth) 
+		{
+			// Calculate ratios of height and width to requested height and width
+			final int heightRatio = Math.round((float) height / (float) reqHeight);
+			final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+			// Choose the smallest ratio as inSampleSize value, this will guarantee
+			// a final image with both dimensions larger than or equal to the
+			// requested height and width.
+			inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+		}
+
+		return inSampleSize;
+	}
+	/*
 	private void taskFailed() {
 		vibrate();
 		Toast.makeText(
@@ -174,7 +211,7 @@ public class LevelActivity extends Activity {
 						+ " enough! Try another color!", Toast.LENGTH_LONG)
 				.show();
 		alertTask();
-	}
+	} */
 
 	private Camera.Size getBestPreviewSize(int width, int height,
 			Camera.Parameters parameters) {
@@ -244,11 +281,13 @@ public class LevelActivity extends Activity {
 		}
 	};
 
-	public boolean isPictureValid(Bitmap bitMap)
+	/*****************PIXELS AND HISTOGRAM*******************************/
+	
+	public int isPictureValid(Bitmap bitMap)
 			throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		int imageSize = getPixelCountWithoutBrownAndGrey(bitMap);
 		int colorPixels = getAmountOfColorInHistogram(histogram);
-
+		
 		return isEnoughColorPixels(colorPixels, imageSize);
 	}
 
@@ -258,159 +297,133 @@ public class LevelActivity extends Activity {
 
 	private int getPixelCountWithoutBrownAndGrey(Bitmap bitMap) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		histogram = new Histogram(bitMap);
-		return getImageSize(bitMap) - getBrownAndGreyPixels();
-	}
-	
-	private int getBrownAndGreyPixels(){
-		return histogram.getGreyPixels() + histogram.getBrownPixels();
+		return getImageSize(bitMap) - histogram.getGreyPixels()
+				- histogram.getBrownPixels();
 	}
 
-	private boolean isEnoughColorPixels(int colorPixels, int adjustedSize) {
-		return (colorPixels * 100) / (adjustedSize / 4) > 20;
+	private int isEnoughColorPixels(int colorPixels, int adjustedSize) {
+		int adjPixels = (colorPixels * 100) / (adjustedSize / 4);
+		return adjPixels;
 	}
 
-	public int getColorPixels(Histogram mHist) {
-		int colorPix = -1;
-		switch (randColor) {
-		case RED:
-			colorPix = mHist.getRedPixels();
-			break;
-		case BLUE:
-			colorPix = mHist.getBluePixels();
-			break;
-		case GREEN:
-			colorPix = mHist.getGreenPixels();
-			break;
-		case ORANGE:
-			colorPix = mHist.getOrangePixels();
-			break;
-		case PINK:
-			colorPix = mHist.getPinkPixels();
-			break;
-		case PURPLE:
-			colorPix = mHist.getPurplePixels();
-			break;
-		}
-		return colorPix;
-	}
 
 	private int getAmountOfColorInHistogram(Histogram mHist)
 			throws IllegalArgumentException, IllegalAccessException,
 			InvocationTargetException, SecurityException, NoSuchMethodException {
 		java.lang.reflect.Method method;
 		method = mHist.getClass().getMethod(
-				"get" + randColor.getStringVersion() + "Pixels");
+				"get" + currentColor.getStringVersion() + "Pixels");
 		return (Integer) method.invoke(mHist);
 
 	}
+	
+	/*****************END PIXELS AND HISTOGRAM*******************************/
 
 	/************* END CAMERA METHODS *********************************/
-
-	public void initGameTimer(long numberOfMiliSec) {
-		countdownTimer = new MyTimer(numberOfMiliSec, COUNTDOWN_INTERVAL,
-				timerView, this);
-	}
 
 	public void stopTimer() {
 		countdownTimer.cancel();
 	}
 
 	public void alertTask() {
-		currentColor = getNewColor();
-		Context mContext = this;
+		currentColor = getNewColor(GlobalState.currentTask);
+		colorImgDrawable = currentColor.getResource();
 
-		final Dialog dialog = new Dialog(mContext);
+		// Dialog
+		final Dialog dialog = new Dialog(this);
 		dialog.setContentView(R.layout.custom_dialog);
-		dialog.setTitle("Level " + getLevelNumber() + " - Task " + taskNumber);
+		dialog.setTitle("Task " + GlobalState.currentTask + " out of " + GlobalState.tasksToComplete);
+		dialog.setCancelable(false);
+		// Text View
 		TextView text = (TextView) dialog.findViewById(R.id.text);
-		text.setText("Take a picture of something that is " + currentColor);
+		text.setText("Take a picture of something that is " + currentColor.getStringVersion());
+		// Image View
 		ImageView image = (ImageView) dialog.findViewById(R.id.imageview);
-
 		image.setImageResource(colorImgDrawable);
 
 		Button button = (Button) dialog.findViewById(R.id.button);
 		button.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
-				if (isFirstTask) {
-					countdownTimer.start();
-					isFirstTask = false;
-				}
 				if (imageView != null && levelTaskView != null) {
 					imageView.setBackgroundResource(colorImgDrawable);
-					levelTaskView.setText("Level: " + getLevelNumber()
-							+ " Task: " + taskNumber);
+					levelTaskView.setText("Task: " + GlobalState.currentTask);
 				}
+				countdownTimer.start();
 				snapButton.setClickable(true);
 				dialog.dismiss();
 			}
 		});
 		dialog.show();
 	}
-
-	public String getNewColor() {
-		String newColor;
-		randColor = ColorEnum.randomColor();
-		newColor = randColor.getStringVersion();
-		colorImgDrawable = randColor.getResource();
-
+	
+	public ColorEnum getNewColor(int taskNumber) {
+		int idx = taskNumber - 1;
+		ColorEnum newColor = GlobalState.randColorList.get(idx);
+		while (newColor.getStringVersion().equals(BROWN) || 
+				newColor.getStringVersion().equals(GREY)) {
+			idx++;
+			newColor = GlobalState.randColorList.get(idx);
+			
+		}
 		return newColor;
 	}
-
+	/*
 	public int randomizeColorSelection() {
 		Random gen = new Random();
 		int pickedNumber = gen.nextInt(6) + 1;
 		return pickedNumber;
-	}
+	}*/
 
 	/****************** LEVELS AND TASKS **********************************/
+	/*
 	public int getLevelNumber() {
 		return GlobalState.level_number;
 	}
 
 	public void setLevelNumber(int levelNum) {
 		GlobalState.level_number = levelNum;
-	}
-
+	}*/
+	/*
 	public void checkTaskProgress() {
 		if (taskNumber <= GlobalState.tasksToComplete) {
 			alertTask();
 		} else {
-			levelCompleted();
+			gameCompleted();
 		}
-	}
+	}*/
 
 	public void taskCompleted() {
-		taskNumber += 1;
-		pool.play(crowdCheer, 1, 1, 1, 0, 1);
+		int taskNumber = GlobalState.currentTask + 1;
+		if (GlobalState.tasksToComplete < taskNumber) {
+			pool.play(crowdCheer, 1, 1, 1, 0, 1);
+			gameCompleted(true);
+		} else {
+			gameCompleted(false);
+		}
 	}
-
+	/*
 	public void incrementTasksToComplete() {
 		GlobalState.tasksToComplete += 2;
 	}
 
 	public void decrementTasksToComplete() {
 		GlobalState.tasksToComplete -= 2;
-	}
-
+	}*/
+	/*
 	public void incrementLevelDuration() {
 		GlobalState.levelDurationMili += 45000;
 	}
 
 	public void decrementLevelDuration() {
 		GlobalState.levelDurationMili -= 45000;
-	}
+	}*/
 
-	public void levelCompleted() {
-		this.onStop();
-		showEndOfLevelAlert(true);
+	public void gameCompleted(boolean complete) {
+		onStop();
+		showEndOfTaskAlert(complete);
 	}
-
-	public void levelFailed() {
-		this.onStop();
-		showEndOfLevelAlert(false);
-	}
-
+	/*
 	public boolean randomOutputPicture() {
 		Random rnd = new Random();
 		int genNum = rnd.nextInt(2) + 1;
@@ -419,18 +432,21 @@ public class LevelActivity extends Activity {
 		} else {
 			return false;
 		}
-	}
+	}*/
 
 	public void onTakePicture(View view) {
+
 		snapButton.setClickable(false);
 		mCamera.takePicture(null, null, myPictureCallback_JPG);
-	}
 
+	}
+	/*
 	private void vibrate() {
 		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		v.vibrate(200);
-	}
-
+	}*/
+	
+	/*
 	private void incrementLevel() {
 		GlobalState.level_number++;
 	}
@@ -439,27 +455,26 @@ public class LevelActivity extends Activity {
 		incrementLevel();
 		incrementLevelDuration();
 		incrementTasksToComplete();
-	}
+	} */
 
-	public void showEndOfLevelAlert(boolean completed) {
-		int currLevel = GlobalState.level_number;
+	public void showEndOfTaskAlert(final boolean gameCompleted) {
 		AlertDialog.Builder alertBox = new AlertDialog.Builder(this);
-		if (completed && currLevel < 10) {
-			alertBox.setMessage("Great job on completing level " + currLevel
-					+ "! Let's keep hunting!");
-			incrementGameDifficulty();
-		} else if (completed && currLevel == 10) {
+		int tasksLeft = GlobalState.tasksToComplete - GlobalState.currentTask;
+		
+		if (gameCompleted) {
 			alertBox.setMessage("Congratulations! You completed the scavenger hunt!");
-			lastLevel = true;
 		} else {
-			alertBox.setMessage("You ran out of time! Try level " + currLevel
-					+ " again!");
+			alertBox.setMessage("Only " + tasksLeft + 
+					" more colors to go! Keep hunting! You're score was " + 
+					Integer.toString(currentColor.getColorScore()));
 		}
+		alertBox.setCancelable(false);
 		alertBox.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialogInterface, int arg1) {
-				if (lastLevel) {
-					startActivity(startIntent);
+				if (gameCompleted) {
+					startActivity(finalIntent);
 				} else {
+					GlobalState.currentTask++;
 					startActivity(currIntent);
 				}
 				dialogInterface.cancel();
@@ -468,31 +483,39 @@ public class LevelActivity extends Activity {
 		alertBox.show();
 	}
 
+	/*
 	private boolean isGameTimeRemaining() {
 		return countdownTimer.getSecondsRemaining() >= 0;
-	}
-
+	}*/
+	
 	@Override
 	public void onBackPressed() {
-		if (isGameTimeRemaining()) {
-			this.onStop();
-			startActivity(currIntent);
-		} else {
-			decrementTasksToComplete();
-			decrementLevelDuration();
-			if (getLevelNumber() > 1) {
-				setLevelNumber(getLevelNumber() - 1);
-				startActivity(currIntent);
-			} else {
-				startActivity(startIntent);
-			}
-		}
+		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+		    public void onClick(DialogInterface dialog, int which) {
+		        switch (which){
+		        case DialogInterface.BUTTON_POSITIVE:
+		            onStop();
+		            GlobalState.currentTask = 1;
+		            startActivity(startIntent);
+		            break;
+
+		        case DialogInterface.BUTTON_NEGATIVE:
+		            dialog.cancel();
+		            break;
+		        }
+		    }
+		};
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage("Are you sure you want to quit?").setPositiveButton("Yes", dialogClickListener)
+		    .setNegativeButton("No", dialogClickListener).show();
 
 	}
 
 	@Override
 	public void onStop() {
 		stopTimer();
+
 		super.onStop();
 	}
 

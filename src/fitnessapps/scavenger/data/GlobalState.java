@@ -1,14 +1,17 @@
 package fitnessapps.scavenger.data;
 
+import java.util.List;
+
 public class GlobalState {
 	
-	private final static int DEFAULT_LEVEL_NUMBER = 1;
-	private final static long DEFAULT_DURATION = 110000;
-	private final static int DEFAULT_TASKS_TO_COMPLETE = 3;
+	private final static long DEFAULT_DURATION = 310000;
+	private final static int DEFAULT_TASKS_TO_COMPLETE = 6;
+	private final static int DEFAULT_TASK_NUMBER = 1;
+	private final static List<ColorEnum> DEFAULT_LIST_OF_COLORS = null;
 	
-	public static int level_number = DEFAULT_LEVEL_NUMBER;
-	public static long levelDurationMili = DEFAULT_DURATION;
+	public static long taskDurationMili = DEFAULT_DURATION;
 	public static int tasksToComplete = DEFAULT_TASKS_TO_COMPLETE;
-
+	public static int currentTask = DEFAULT_TASK_NUMBER;
+	public static List<ColorEnum> randColorList = DEFAULT_LIST_OF_COLORS;
 }
 

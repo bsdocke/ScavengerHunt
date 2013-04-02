@@ -4,5 +4,9 @@
     <string name="app_name">ScavengerHunt</string>
     <string name="gameTitle">Scavenger Hunt</string>
     <string name="start">Start</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
+    <string name="directions">Choose difficulty:</string>
 
 </resources>
