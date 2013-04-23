@@ -37,7 +37,7 @@ public class MyTimer extends CountDownTimer {
 	public void onFinish() {
 		textView.setText("Times Up!");
 		boolFinished = true;
-		level.levelFailed();
+		level.taskCompleted();
 	}
 	@Override
 	public void onTick(long millisUntilFinished) {
